@@ -1,0 +1,121 @@
+import os.path
+
+# Pygame imports
+import pygame, pygame.mixer
+from pygame import Surface
+from pygame.image import load
+from pygame.locals import *
+from pygame.mixer import music
+from pygame.rect import Rect
+from pygame.sprite import Group, Sprite
+
+# Random imports
+from random import randint, choice
+
+# Microgame-specific imports
+import locals
+from microgame import Microgame
+
+##### LOADER-REQUIRED FUNCTIONS ################################################
+
+def make_game():
+    # TODO: Return a new instance of your Microgame class.
+    return DressOseraGame()
+
+def title():
+    # TODO: Return the title of the game.
+    return "Dress Osera"
+
+def thumbnail():
+    # TODO: Return a (relative path) to the thumbnail image file for your game.
+    return os.path.join("games", "thumbnail.jpg")
+
+def hint():
+    # TODO: Return the hint string for your game.
+    return "Dress Professera However You Want"
+
+################################################################################
+
+def _load_image(name, x, y):
+    '''
+    Loads an image file, returning the surface and rectangle corresponding to
+    that image at the given location.
+    '''
+    try:
+        image = load(name)
+        if image.get_alpha is None:
+            image = image.convert()
+        else:
+            image = image.convert_alpha()
+    except pygame.error, msg:
+        print 'Cannot load image: {}'.format(name)
+        raise SystemExit, msg
+    rect = image.get_rect().move(x, y)
+    return image, rect
+
+##### MODEL CLASSES ###########################################################
+
+# TODO: put your Sprite classes here
+
+MAX_VELOCITY = 20
+DECAY        = 2
+
+class OseraSprite(Sprite):
+    def __init__(self):
+        Sprite.__init__(self)
+        imgpath = os.path.join("games","thumbnail.jpg")
+        self.img, self.rect = _load_image(imgpath, 300, 100)
+        #self.rect = bounding box, can tell when things collide
+        self.velocity = MAX_VELOCITY
+   
+    def _update_velocity(self):
+        new_velocity = self.velocity + DECAY
+        if new_velocity >= MAX_VELOCITY:
+            self.velocity = MAX_VELOCITY
+        else:
+            self.velocity = new_velocity
+
+    def update(self):
+        #update velocity
+        self._update_velocity()
+        #update position
+        self.rect = self.rect.move(0, self.velocity)
+
+##### MICROGAME CLASS #########################################################
+
+# TODO: rename this class to your game's name
+# (and change "MyMicrogame" instances throughout)
+class MyMicrogame(Microgame):
+    def __init__(self):
+        MyMicrogame.__init__(self)
+        # TODO: Initialization code here
+        self.osera = OseraSprite()
+        self.sprites = Group(self.osera) #putting sprites in "lists"
+
+    def start(self):
+        # TODO: Startup code here
+        music.load(join("games","Blip_Select7.wav"))
+        music.play()
+
+    def stop(self):
+        # TODO: Clean-up code here
+        music.stop()
+    def update(self, events):
+        self.entities.update()
+        for event in events:
+            if event.type == MOUSEBUTTONDOWN and pygame.mouse.get_pressed() == True: #checks to see if mouse button is being clicked
+                p = pygame.mouse.get_pos() #gets the mouse position
+                for pic in self.sprites:
+                    if pic.collidepoint(p): #if the point of the mouse is within the rectangle of the sprite
+                        chosenSprite = pic
+
+        #chosenSprite.rect.clamp(****rect****) #clamps the rectangle of the sprite within another rectangle. need to set invisible rectangle around peter michael
+
+    def render(self, surface):
+        # TODO: Rendering code here
+        surface.fill(Color(0,0, 0)) #fill method fills the surface (background) with color
+        self.sprites.draw(surface)
+
+    def get_timelimit(self):
+        # TODO: Return the time limit of this game (in seconds)
+        return 15
